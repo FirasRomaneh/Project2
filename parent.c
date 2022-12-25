@@ -15,42 +15,62 @@
 
 pid_t pid;
 pid_t pids[10];
+pid_t male_worker_pid, female_worker_pid;
+pid_t male_secofficer_pid, female_secofficer_pid;
+void kill_all(int);
 
 int main () {
+    if(sigset(SIGINT, kill_all) == -1) {
+        perror("sigset can not set SIGINT");
+        exit(SIGINT);
+    }
+    
     pid = fork();
     if(pid == -1)  //error
         exit(-1);
     else if(pid == 0) { //w
-        execl("./worker", "MALE", "1",(char *) NULL);
+        execl("./worker", "MALE", (char *) NULL);
         perror("exec failure ");
         exit(-2);
+    }
+    else {
+        male_worker_pid = getpid();
     }
 
     pid = fork();
     if(pid == -1)  //error
         exit(-1);
     else if(pid == 0) { //w
-        execl("./worker", "FEMALE", "1",(char *) NULL);
+        execl("./worker", "FEMALE", (char *) NULL);
         perror("exec failure ");
         exit(-2);
     }
-    sleep(1);
+    else {
+        female_worker_pid = getpid();
+    }
+    
     pid = fork();
     if(pid == -1)  //error
         exit(-1);
     else if(pid == 0) { //w
-        execl("./worker", "MALE", "2",(char *) NULL);
+        execl("./secofficer", "MALE", (char *) NULL);
         perror("exec failure ");
         exit(-2);
+    }
+    else {
+        male_secofficer_pid = getpid();
     }
 
     pid = fork();
     if(pid == -1)  //error
         exit(-1);
     else if(pid == 0) { //w
-        execl("./worker", "FEMALE", "2",(char *) NULL);
+        execl("./secofficer", "FEMALE", (char *) NULL);
         perror("exec failure ");
         exit(-2);
+    }
+    else {
+        female_secofficer_pid = getpid();
     }
 
     printf("\033[0;36m");
@@ -73,8 +93,19 @@ int main () {
             sleep(1);
         }
     }
+    
+    
+    
     while(1);
 }
 
-
-
+void kill_all(int sig) {
+    for(int i=0; i<10; i++) {
+    	kill(pids[i], SIGKILL);
+    }
+    kill(male_worker_pid, SIGKILL);
+    kill(female_worker_pid, SIGKILL);
+    kill(male_secofficer_pid, SIGKILL);
+    kill(female_secofficer_pid, SIGKILL);
+    exit(0);
+}

@@ -15,34 +15,23 @@
 
 struct people{
 	long int type;
-    char* gender;
+    char gender[10];
 	int pid; // to know to which client to return the file data
 } person;
 
 int main(int argc, char* args[]){
     char* gender = args[0];
-    //int gg = atoi(g);
-    person.gender = gender;
-    int mid1, mid2;
+    strcpy(person.gender, gender);
+    int mid1;
     sem_t *m1;
-    key_t key = 8000;
-    key_t key1 = 10000;
     if(strcmp(gender, "MALE") == 0){
-	    mid1 = msgget(key,0666|IPC_CREAT); //create new queue
-        if(mid1 == -1){
-            perror("msgget initialization");
-		    exit(1);
-        }
+	    mid1 = msgget(5000,0666|IPC_CREAT); //create new queue
 	    if ((m1 = sem_open("mysemaphore1", O_CREAT, 0644, 1)) == SEM_FAILED) {
 		    perror("semaphore initialization");
 		    exit(1);
 	    }
     } else {
-        mid1 = msgget(key1,0666|IPC_CREAT); //create new queue
-        if(mid1 == -1){
-            perror("msgget initialization");
-		    exit(1);
-        }
+        mid1 = msgget(7000,0666|IPC_CREAT); //create new queue
         if ((m1 = sem_open("mysemaphore2", O_CREAT, 0644, 1)) == SEM_FAILED) {
 		    perror("semaphore initialization");
 		    exit(1);
