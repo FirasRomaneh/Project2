@@ -15,7 +15,7 @@
 
 struct people{
 	long int type;
-    char* gender;
+    char gender[10];
 	int pid; // to know to which client to return the file data
 } person;
 
