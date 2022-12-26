@@ -1,91 +1,143 @@
 #include "local.h"
+
 void signal_catcher(int);
+
 int main(int argc, char* args[]){
-    srand(time(0)*person.pid);
-    person.patience_time = (rand() % (121)) + 30;
-	 alarm(10); // will send SIGALRM after 1 second
-	if (sigset(SIGALRM, signal_catcher) == SIG_ERR ) {
-		perror("SIGSET cannot set SIGALRM");
-		exit(SIGINT);
-	}
+    person.pid = getpid();
     char* gender = args[0];
     strcpy(person.ticket, args[1]);
     strcpy(person.gender, gender);
     int mid1;
     sem_t *m1;
     char str_ticket[9];
+    int shmID = shmget(1000, sizeof(int)*9, 0666 | IPC_CREAT);
+    int* s;
+    sem_t *sem1, *sem2;
+    int index_Area1, index_Area2;
     if(strcmp(gender, "MALE") == 0){
+        index_Area1 = 1;
+        index_Area2 = 3;
 	    mid1 = msgget(5000,0666|IPC_CREAT); //create new queue
 	    if ((m1 = sem_open("mysemaphore1", O_CREAT, 0644, 1)) == SEM_FAILED) {
 		    perror("semaphore initialization");
 		    exit(1);
 	    }
+        if ((sem1 = sem_open("mysemaphore3", O_CREAT, 0644, 1)) == SEM_FAILED) {
+		    perror("semaphore initialization");
+		    exit(1);
+	    }
+        if ((sem2 = sem_open("mysemaphore5", O_CREAT, 0644, 1)) == SEM_FAILED) {
+		    perror("semaphore initialization");
+		    exit(1);
+	    }
     } else {
+        index_Area1 = 2;
+        index_Area2 = 4;
         mid1 = msgget(7000,0666|IPC_CREAT); //create new queue
         if ((m1 = sem_open("mysemaphore2", O_CREAT, 0644, 1)) == SEM_FAILED) {
 		    perror("semaphore initialization");
 		    exit(1);
 	    }
+        if ((sem1 = sem_open("mysemaphore4", O_CREAT, 0644, 1)) == SEM_FAILED) {
+		    perror("semaphore initialization");
+		    exit(1);
+	    }
+        if ((sem2 = sem_open("mysemaphore5", O_CREAT, 0644, 1)) == SEM_FAILED) {
+		    perror("semaphore initialization");
+		    exit(1);
+	    }
     }
     int mid2 = msgget(9000,0666|IPC_CREAT); //create new queue
-    printf("\033[0;34m");
-    printf("A %s person with PID = %d has entered Area 1\n", person.gender, getpid());
-    person.pid = getpid();
+    sem_wait(sem1);
+    s = (int *)shmat(shmID, NULL, 0);
+    s[index_Area1]++;
+    shmdt(s);
+    sem_post(sem1);
     person.type = 1;
 	msgsnd(mid1, &person, sizeof(person)-4, 0);// send pointer to p on the queue
+    sleep(2);
+    srand(time(0)*person.pid);
+    int P = (rand() % (10)) + 1;
+    if(P > 9){
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[7]++;
+        shmdt(s);
+        sem_post(sem2);
+        sem_wait(sem1);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[index_Area1]--;
+        shmdt(s);
+        sem_post(sem1);
+        exit(0);
+    } 
     msgrcv(mid1, &person, sizeof(person)-4, getpid(), 0);
     sem_wait(m1);
-    printf("\033[0;31m");
-    printf("A %s person with PID = %d has entered Area 2\n", person.gender, getpid());
-    fflush(stdout);
+    sem_wait(sem1);
+    s = (int *)shmat(shmID, NULL, 0);
+    s[index_Area1]--;
+    s[index_Area2]++;
+    shmdt(s);
+    sem_post(sem1);
     person.pid = getpid();
     person.type = 2;
     msgsnd(mid1, &person, sizeof(person)-4 ,0);// send pointer to p on the queue
     msgrcv(mid1, &person, sizeof(person)-4, getpid(), 0);
     sem_post(m1);
-    printf("\033[0;35m");
-    printf("A %s person with PID = %d has entered the inner grouping area\n", person.gender, getpid());
+    sem_wait(sem1);
+    s = (int *)shmat(shmID, NULL, 0);
+    s[index_Area2]--;
+    shmdt(s);
+    sem_post(sem1);
+    sem_wait(sem2);
+    s = (int *)shmat(shmID, NULL, 0);
+    s[5]++;
+    shmdt(s);
+    sem_post(sem2);
     sprintf(str_ticket, "%d", getpid());
     strcat(person.ticket, str_ticket);
     person.served = 0;
     person.pid = getpid();
     int type_ticket = 0;
-    printf("\033[0;39m");
     if(person.ticket[0] == 'B'){
         type_ticket = 1;
-        printf("The person with pid = %d got a BIRTH CERTIFICATE ticket\n", getpid());
     } else if(person.ticket[0] == 'T'){
         type_ticket = 2;
-        printf("The person with pid = %d got a TRAVEL DOCUMENT ticket\n", getpid());
     } else if(person.ticket[0] == 'R'){
         type_ticket = 3;
-        printf("The person with pid = %d got a FAMILY REUNION ticket\n", getpid());
     } else if(person.ticket[0] == 'I'){
         type_ticket = 4;
-        printf("The person with pid = %d got an ID-RELATED ticket\n", getpid());
     }
-    fflush(stdout);
+    person.pid = getpid();
     person.type = type_ticket;
     msgsnd(mid2, &person, sizeof(person)-4 ,0);// send pointer to p on the queue
-    msgrcv(mid2, &person, sizeof(person)-4, getpid(), 0);
-    printf("\033[0;33m");
-    if(person.served == 1){
-        printf("A %s person with pid = %d was served\n", person.gender, getpid());
-    } else {
-        printf("A %s person with pid = %d was NOT served\n", person.gender, getpid());
-    }
-    fflush(stdout);
-    while(1);
-}
-
-
-void signal_catcher(int the_sig) {
-    person.patience_time -= 30;
-    if(person.patience_time <= 0){
-        printf("\033[0;38m");
-        printf("A %s person with pid = %d was impatient and left unserved\n", person.gender, getpid());
-        fflush(stdout);
+    sleep(2);
+    srand(time(0)*person.pid);
+    P = (rand() % (10)) + 1;
+    if(P > 9){
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[7]++;
+        s[5]--;
+        shmdt(s);
+        sem_post(sem2);
         exit(0);
+    } 
+    msgrcv(mid2, &person, sizeof(person)-4, getpid(), 0);
+    if(person.served == 1){
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[8]++;
+        s[5]--;
+        shmdt(s);
+        sem_post(sem2);
+    } else {
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[6]++;
+        s[5]--;
+        shmdt(s);
+        sem_post(sem2);
     }
-	alarm(10);//set an alarm after another second to trigger this function again
+    exit(0);
 }

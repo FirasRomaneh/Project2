@@ -17,11 +17,22 @@ int main(int argc, char* args[]){
             exit(1);
         }
     }
-    sem_init(m1, 1, 3);
     sleep(8);
     while (1){
         msgrcv(m, &person, sizeof(person)-4, 1, 0);
         person.type = person.pid;
+        char piddw[20];
+        sprintf(piddw, "/proc/%d/stat", person.pid);
+        FILE* f = fopen(piddw, "r");
+        int unused;
+        char comm[1000];
+        char state;
+        int ppid;
+        fscanf(f, "%d %s %c %d", &unused, comm, &state, &ppid);
+        if(state == 'Z'){
+            continue;
+        }
+        fclose(f);
         sleep(2);
         msgsnd(m, &person, sizeof(person)-4 ,0);// send pointer to p on the queue
     }

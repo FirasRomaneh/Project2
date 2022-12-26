@@ -1,0 +1,5 @@
+total_number_of_people 30
+area2_max_capacity 5
+maxnumber_people_leave_unserved 10
+maxnumber_people_leave_unhappy 10
+maxnumber_people_leave_satisfied 16

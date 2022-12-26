@@ -18,6 +18,5 @@ struct people{
     char gender[10];
     char ticket[10];
     int served;
-    int patience_time;
 	int pid; // to know to which client to return the file data
 } person;
