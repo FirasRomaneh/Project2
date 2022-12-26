@@ -39,7 +39,7 @@ int main () {
     fgets(temp, 250, file);
     strcpy(word, strtok(temp," "));
     maxnumber_people_leave_satisfied = atoi(strtok(NULL,"\0"));
-    shmID = shmget(1000, sizeof(int)*9, 0666 | IPC_CREAT);
+    shmID = shmget(1000, sizeof(int)*13, 0666 | IPC_CREAT);
     mid1 = msgget(5000,0666|IPC_CREAT); //create new queue
     mid2 = msgget(7000,0666|IPC_CREAT); //create new queue
     mid3 = msgget(9000,0666|IPC_CREAT);
@@ -124,12 +124,16 @@ int main () {
     printf("\033[0;36m");
     printf("Running............\n"); 
     fflush(stdout);
+    int sleepTime = max_num_of_people/8;
+    sleepTime++;
     for(int i=0; i<max_num_of_people; i++) {       // forking people
         pid = fork();
         if(pid == -1)  //error
             exit(-1);
         else if(pid == 0) { //people
-            sleep(1);
+            int T = i/sleepTime;
+            T++;
+            sleep(T);
             srand(time(0)*i*(unsigned) getpid());
             int num = (rand() % (4)) + 1;
             if(i%2 == 0){
@@ -164,6 +168,8 @@ int main () {
     }    
     while(1){
         sem_wait(sem3);
+        sem_wait(sem2);
+        sem_wait(sem1);
         s = (int *)shmat(shmID, NULL, 0);
         system("clear") ;        
         printf("\033[0;36m");
@@ -178,17 +184,27 @@ int main () {
         printf("Number of FEMALE people in Area 2 = %d\n", s[4]);
         printf("\033[0;35m");
         printf("Number of people in Inner Grouping Area = %d\n", s[5]);
+        printf("\033[0;36m");
+        printf("Number of people who need BIRTH CERTIFICATE requests = %d\n", s[6]);
+        printf("\033[0;33m");
+        printf("Number of people who need TRAVEL DOCUMENT requests = %d\n", s[7]);
+        printf("\033[0;31m");
+        printf("Number of people who need FAMILY REUNION requests = %d\n", s[8]);
+        printf("\033[0;34m");
+        printf("Number of people who need ID-RELATED requests = %d\n", s[9]);
         printf("\033[0;30m");
-        num_of_people_left_unserved = s[6];
+        num_of_people_left_unserved = s[10];
         printf("Number of people who were UNSERVED = %d\n", num_of_people_left_unserved);
         printf("\033[0;37m");
-        num_of_people_left_unhappy = s[7];
+        num_of_people_left_unhappy = s[11];
         printf("Number of people who were UNHAPPY = %d\n", num_of_people_left_unhappy);
         printf("\033[0;32m");
-        num_of_people_left_satisfied = s[8];
+        num_of_people_left_satisfied = s[12];
         printf("Number of people who were SATISFIED = %d\n", num_of_people_left_satisfied);
         fflush(stdout);
         shmdt(s);
+        sem_post(sem1);
+        sem_post(sem2);
         sem_post(sem3);
         printf("\033[0;30m");
         if(num_of_people_left_unserved > maxnumber_people_leave_unserved){

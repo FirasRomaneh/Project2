@@ -61,7 +61,7 @@ int main(int argc, char* args[]){
     if(P > 9){
         sem_wait(sem2);
         s = (int *)shmat(shmID, NULL, 0);
-        s[7]++;
+        s[11]++;
         shmdt(s);
         sem_post(sem2);
         sem_wait(sem1);
@@ -101,12 +101,32 @@ int main(int argc, char* args[]){
     int type_ticket = 0;
     if(person.ticket[0] == 'B'){
         type_ticket = 1;
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[6]++;
+        shmdt(s);
+        sem_post(sem2);
     } else if(person.ticket[0] == 'T'){
         type_ticket = 2;
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[7]++;
+        shmdt(s);
+        sem_post(sem2);
     } else if(person.ticket[0] == 'R'){
         type_ticket = 3;
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[8]++;
+        shmdt(s);
+        sem_post(sem2);
     } else if(person.ticket[0] == 'I'){
         type_ticket = 4;
+        sem_wait(sem2);
+        s = (int *)shmat(shmID, NULL, 0);
+        s[9]++;
+        shmdt(s);
+        sem_post(sem2);
     }
     person.pid = getpid();
     person.type = type_ticket;
@@ -117,8 +137,17 @@ int main(int argc, char* args[]){
     if(P > 9){
         sem_wait(sem2);
         s = (int *)shmat(shmID, NULL, 0);
-        s[7]++;
+        s[11]++;
         s[5]--;
+        if(type_ticket == 1){
+            s[6]--;
+        } else if(type_ticket == 2){
+            s[7]--;
+        } else if(type_ticket == 3){
+            s[8]--;
+        } else if(type_ticket == 4){
+            s[9]--;
+        }
         shmdt(s);
         sem_post(sem2);
         exit(0);
@@ -127,15 +156,33 @@ int main(int argc, char* args[]){
     if(person.served == 1){
         sem_wait(sem2);
         s = (int *)shmat(shmID, NULL, 0);
-        s[8]++;
+        s[12]++;
         s[5]--;
+        if(type_ticket == 1){
+            s[6]--;
+        } else if(type_ticket == 2){
+            s[7]--;
+        } else if(type_ticket == 3){
+            s[8]--;
+        } else if(type_ticket == 4){
+            s[9]--;
+        }
         shmdt(s);
         sem_post(sem2);
     } else {
         sem_wait(sem2);
         s = (int *)shmat(shmID, NULL, 0);
-        s[6]++;
+        s[10]++;
         s[5]--;
+        if(type_ticket == 1){
+            s[6]--;
+        } else if(type_ticket == 2){
+            s[7]--;
+        } else if(type_ticket == 3){
+            s[8]--;
+        } else if(type_ticket == 4){
+            s[9]--;
+        }
         shmdt(s);
         sem_post(sem2);
     }
